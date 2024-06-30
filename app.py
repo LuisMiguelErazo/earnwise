@@ -851,6 +851,9 @@ rmse = mean_squared_error(y_test, y_pred, squared=False)
 r2 = r2_score(y_test, y_pred)
 
 def show_salary_prediction():
+    if st.button('Home'):
+        st.session_state.page = "home"
+
     st.title("Salary Prediction Dashboard")
 
     experience_level = st.selectbox("Experience Level:", df_prediction['formatted_experience_level'].unique())
