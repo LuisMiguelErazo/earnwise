@@ -795,8 +795,8 @@ def show_salary_insights():
 @st.cache_data
 def load_data(zip_path, csv_name):
     try:
-        with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
-            with zipf.open('df_clean_final - copia2.csv') as f:
+        with zipfile.ZipFile(zip_path, 'r') as zipf:
+            with zipf.open(csv_name) as f:
                 df = pd.read_csv(f)
         df.drop(columns=['Unnamed: 0'], inplace=True)
         df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
@@ -849,6 +849,27 @@ dtest = xgb.DMatrix(x_test)
 y_pred = model.predict(dtest)
 rmse = mean_squared_error(y_test, y_pred, squared=False)
 r2 = r2_score(y_test, y_pred)
+
+# Función para predecir salarios por estado
+def predict_state_salaries(experience_level, industry, category, min_salary, max_salary):
+    predictions = []
+    for state in df_prediction['state_formatted'].unique():
+        employee_count = df_prediction.loc[df_prediction['state_formatted'] == state, 'employee_count'].values[0]
+        input_data = pd.DataFrame({
+            'formatted_experience_level': [experience_level],
+            'group_industry': [industry],
+            'category': [category],
+            'state_formatted': [state],
+            'minimum_salary': [min_salary],
+            'maximum_salary': [max_salary],
+            'employee_count': [employee_count]
+        })
+        input_data = pd.get_dummies(input_data)
+        input_data = input_data.reindex(columns=x.columns, fill_value=0)
+        dinput = xgb.DMatrix(input_data)
+        prediction = model.predict(dinput)
+        predictions.append((state, prediction[0]))
+    return predictions
 
 def show_salary_prediction():
     if st.button('Home'):
